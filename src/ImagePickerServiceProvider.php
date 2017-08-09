@@ -13,7 +13,7 @@ class ImagePickerServiceProvider extends ServiceProvider
     {
 
 
-        $this->publishes([__DIR__.'/../assets' => resource_path()], 'assets');
+        $this->publishes([__DIR__.'/../assets' => resource_path()], 'assetsImagePicker');
 
 
     }

@@ -15,7 +15,7 @@
   },
   "autoload": {
     "psr-4": {
-      "Joanvt\\ImagePicker\\": "joanvt/imagepicker"
+      "Joanvt\\ImagePicker\\": "src/"
     }
   }
 }
