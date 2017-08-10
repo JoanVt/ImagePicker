@@ -1,6 +1,7 @@
 <?php namespace Joanvt\ImagePicker;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\File;
 
 class ImagePickerServiceProvider extends ServiceProvider
 {
@@ -12,8 +13,11 @@ class ImagePickerServiceProvider extends ServiceProvider
     public function boot()
     {
 
+        if(!File::exists(config_path('imagepicker.php'))){
+            $this->publishes([__DIR__.'/../config' => config_path()], 'config');
+        }
 
-        $this->publishes([__DIR__.'/../assets' => resource_path()], 'assetsImagePicker');
+        $this->loadRoutesFrom(__DIR__.'/routes.php');
 
 
     }
@@ -24,10 +28,9 @@ class ImagePickerServiceProvider extends ServiceProvider
      */
     public function register()
     {
+
         $loader = \Illuminate\Foundation\AliasLoader::getInstance();
         $loader->alias('ImagePicker', \Joanvt\ImagePicker\ImagePicker::class);
-
-
 
         $this->app->bind('Joanvt\ImagePicker\Traits\ImagePicker', function(){
 
