@@ -24,8 +24,13 @@ class UploadRequest extends FormRequest
     public function rules()
     {
         return [
-            'file' => 'required|image',
-
+            'action' => 'required|string|in:preview,crop,upload',
+            'file' => 'required_if:action,upload|image',
+            'rotate' => 'in:0,90,180,270',
+            'image' => 'required_if:action,crop|string',
+            'path' => 'required_if:action,crop|required_if:action,preview|string',
+            'coords' => 'required_if:action,crop|array',
+            'coords.*' => 'numeric',
         ];
     }
 }

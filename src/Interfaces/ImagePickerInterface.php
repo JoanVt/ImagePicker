@@ -14,4 +14,8 @@ interface ImagePickerInterface
 
     public function getUploadPath($image = '', $version = '');
 
+    public function uploadHandler($image);
+
+    public function cropAction($image, $path, $width, $height, $x, $y, $x2, $y2, $rotate = null);
+
 }

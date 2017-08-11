@@ -36,10 +36,10 @@ i.e:
 - wiki
 - Create Unit Tests
 - Saving Images -- On it
-- Rotate Images -- On it
 - More Integrations with other Croppers
 
 #Done
 
 - Uploading Images
 - Retrieving Images
+- Rotate Images

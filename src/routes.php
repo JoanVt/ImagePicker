@@ -14,5 +14,4 @@ if(Config::get('imagepicker.routeGroup')){
 Route::group($configGroup,function(){
     Route::get('upload', 'Joanvt\ImagePicker\Controllers\ImagePickerController@load')->name('IMP_upload');
     Route::post('upload', 'Joanvt\ImagePicker\Controllers\ImagePickerController@upload')->name('IMP_upload');
-
 });
