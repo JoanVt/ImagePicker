@@ -5,7 +5,7 @@
 class ImagePicker
 {
 
-    public function load(){
+    public function hi(){
         echo "HI";
     }
 }
