@@ -20,12 +20,14 @@ interface ImagePickerInterface
 
     public function createVersions ($imagePath,$path, $is_upload = false);
 
-    public function delete ();
+    public function delete (Request $request);
 
     public function cropped (\StdClass $response);
 
     public function uploaded (\StdClass $response);
 
     public function deleted (\StdClass $response);
+
+    public function beforeDelete();
 
 }

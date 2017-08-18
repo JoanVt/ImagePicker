@@ -1,11 +1,10 @@
 <?php namespace Joanvt\ImagePicker\Traits;
 
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
-use Joanvt\ImagePicker\Interfaces\ImagePickerInterface;
 use Illuminate\Support\Facades\Storage;
 use Joanvt\ImagePicker\Requests\UploadRequest;
 use Intervention\Image\ImageManagerStatic as Image;
+use Illuminate\Support\Facades\Validator;
 
 
 trait ImagePicker {
@@ -242,8 +241,31 @@ trait ImagePicker {
         return $versions;
     }
 
-    public function delete(){
-        //
+    public function delete(Request $request){
+
+        $this->beforeDelete();
+
+        $validator = Validator::make($request->all(), [
+            'file' => 'required|string',
+            'path' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['Error' => 'Something went wrong'])->setStatusCode(422);
+        }
+
+        $file = $request->get('file');
+        $path = $request->get('path');
+
+
+        $delete = Storage::disk($this->options['upload_dir'])->delete($path.'/'.$file);
+
+        dump($delete);
+
+
+        $response = new \StdClass();
+
+        $this->deleted($response);
     }
 
     public function cropped (\StdClass $response){
@@ -256,6 +278,10 @@ trait ImagePicker {
 
     public function deleted (\StdClass $response){
         //
+    }
+
+    public function beforeDelete(){
+
     }
 
 }
