@@ -16,7 +16,7 @@ trait ImagePicker {
     {
         $this->options = [
             'upload_dir' => 'public', // It means Storage::disk('public')
-            'upload_folder' => 'images/'.date('Y').'/'.date('m').'/'.date('d'),
+            'upload_folder' => 'images/' . date('Y') . '/' . date('m') . '/' . date('d'),
             'file_name' => 'hash', // Availables: hash, original, numbered
             'auto_orient' => true,
             'min_width' => 200, // Could be null
@@ -50,7 +50,8 @@ trait ImagePicker {
             $image = $image->rotate($angle)->stream();
         }
 
-        return response($image)->header('Content-Type', 'image/jpeg');
+
+        return response($image)->header('Content-Type', 'image/jpeg')->header('Content-Length',Storage::disk($this->options['upload_dir'])->size($path.'/'.$file));
 
 
     }
@@ -88,6 +89,7 @@ trait ImagePicker {
 
     public function uploadHandler ($file){
 
+        $this->beforeUpload();
         $response = new \StdClass();
 
         if ($this->options['file_name'] == 'original') {
@@ -97,14 +99,15 @@ trait ImagePicker {
         }
 
         $fileUrl = Storage::disk($this->options['upload_dir'])->url($stored);
+        $img = Storage::disk($this->options['upload_dir'])->get($stored);
 
         $response->type = pathinfo($stored, PATHINFO_EXTENSION);
         $response->name = pathinfo($stored, PATHINFO_FILENAME) . '.' . $response->type;
-        $response->size = $file->getClientSize();
+        $response->size = Storage::disk($this->options['upload_dir'])->size($stored);
         $response->path = $this->options['upload_folder'];
         $response->url = $fileUrl;
 
-        list($response->width, $response->height) = @getimagesize($file);
+        list($response->width, $response->height) = @getimagesizefromstring($img);
 
         $this->uploaded($response);
 
@@ -145,9 +148,11 @@ trait ImagePicker {
 
         $response->type = pathinfo($image, PATHINFO_EXTENSION);
         $response->name = pathinfo($image, PATHINFO_FILENAME) . '.' . $response->type;
-        $response->size = $original->filesize();
+        $response->size = Storage::disk($this->options['upload_dir'])->size($tmpUrl);
         $response->path = $path;
         $response->url = $fileUrl;
+
+        list($response->width, $response->height) = @getimagesizefromstring($imageFontSrc);
 
         $response->versions = $this->createVersions($tmpUrl,$path);
 
@@ -161,19 +166,66 @@ trait ImagePicker {
      * @param  string $version
      * @return string
      */
-    public function getUploadPath ($filename = '', $version = ''){
+    public function getUploadPath ($name,$path){
 
-        $upload_dir = $this->options['upload_folder'];
+        $response = new \stdClass;
 
-        if ($version != '') {
-            $dir = @$this->options['versions'][$version]['upload_dir'];
 
-            if (!empty($dir)) {
-                $upload_dir = $dir;
+
+        $fileUrl = Storage::disk($this->options['upload_dir'])->url($path.'/'.$name);
+        $img = Storage::disk($this->options['upload_dir'])->get($path.'/'.$name);
+
+        $response->type = pathinfo($fileUrl, PATHINFO_EXTENSION);
+        $response->name = pathinfo($fileUrl, PATHINFO_FILENAME) . '.' . $response->type;
+        $response->size = Storage::disk($this->options['upload_dir'])->size($path.'/'.$name);
+        $response->path = $this->options['upload_folder'];
+        $response->url = $fileUrl;
+        list($response->width, $response->height) = @getimagesizefromstring($img);
+
+        $response->versions = [];
+
+        foreach ($this->options['versions'] as $version => $options) {
+
+            $widthSetted = null;
+            $heightSetted = null;
+
+            if(isset($options['width']) && $options['width']){
+                $widthSetted = $options['width'];
             }
+
+            if(isset($options['height']) && $options['height']){
+                $heightSetted = $options['height'];
+            }
+
+            if(!$widthSetted && !$heightSetted){
+                return false;
+            }
+
+
+            if($widthSetted && $heightSetted){
+                $folder = $path.'/thumbs/'.$widthSetted.'x'.$heightSetted;
+            }elseif($widthSetted && !$heightSetted){
+                $folder = $path.'/thumbs/'.$widthSetted.'x'.$widthSetted;
+            }elseif($heightSetted && !$widthSetted){
+                $folder = $path.'/thumbs/'.$heightSetted.'x'.$heightSetted;
+            }
+
+
+
+            $savePath = $folder.'/'.$name;
+
+            $imgUrl = Storage::disk($options['upload_dir'])->url($savePath);
+
+
+            $response->versions[$version] = array(
+                'url'    => $imgUrl,
+                'width'  => $widthSetted,
+                'height' => $heightSetted
+            );
+
         }
 
-        return $upload_dir .'/'. $filename;
+        return $response;
 
     }
 
@@ -212,11 +264,11 @@ trait ImagePicker {
             });
 
             if($widthSetted && $heightSetted){
-                $folder = $path.'/'.$widthSetted.'x'.$heightSetted.'/';
+                $folder = $path.'/thumbs/'.$widthSetted.'x'.$heightSetted;
             }elseif($widthSetted && !$heightSetted){
-                $folder = $path.'/'.$widthSetted.'x'.$widthSetted.'/';
+                $folder = $path.'/thumbs/'.$widthSetted.'x'.$widthSetted;
             }elseif($heightSetted && !$widthSetted){
-                $folder = $path.'/'.$heightSetted.'x'.$heightSetted.'/';
+                $folder = $path.'/thumbs/'.$heightSetted.'x'.$heightSetted;
             }
 
             $ext = pathinfo($imagePath, PATHINFO_EXTENSION);
@@ -243,7 +295,6 @@ trait ImagePicker {
 
     public function delete(Request $request){
 
-        $this->beforeDelete();
 
         $validator = Validator::make($request->all(), [
             'file' => 'required|string',
@@ -254,21 +305,37 @@ trait ImagePicker {
             return response()->json(['Error' => 'Something went wrong'])->setStatusCode(422);
         }
 
+
         $file = $request->get('file');
         $path = $request->get('path');
 
+        if(!$this->beforeDelete($file,$path)){
+            abort(404);
+        }
 
         $delete = Storage::disk($this->options['upload_dir'])->delete($path.'/'.$file);
 
-        dump($delete);
-
-
         $response = new \StdClass();
+
+        if($delete){
+            $response->deleted = true;
+            $response->path = $path;
+            $response->name = $file;
+        };
 
         $this->deleted($response);
     }
 
+    public function autoload(){
+        /*$image = $this->getUploadPath($name,$path);
+        return response()->json($image);*/
+    }
+
     public function cropped (\StdClass $response){
+        //
+    }
+
+    public function beforeUpload (){
         //
     }
 
@@ -277,11 +344,13 @@ trait ImagePicker {
     }
 
     public function deleted (\StdClass $response){
-        //
+        // Once deleted you can update your user attached image, for example.
     }
 
-    public function beforeDelete(){
-
+    public function beforeDelete($file,$path){
+        // Check if the user can delete this file!
+        // Check Laravel Authorization FYI as extra! Is not needed at all.
+        return true;
     }
 
 }

@@ -30,4 +30,8 @@ interface ImagePickerInterface
 
     public function beforeDelete();
 
+    public function beforeUpload($file,$path);
+
+    public function autoload();
+
 }
