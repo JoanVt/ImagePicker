@@ -63,7 +63,7 @@ trait ImagePicker {
 
         if ($request->action === 'upload') {
             $file = $request->file('file');
-            $response = $this->uploadHandler($file);
+            $response = $this->uploadHandler($file, $request);
         } elseif ($request->action === 'crop'){
             $file = $request->get('image');
             $path = $request->get('path');
@@ -81,15 +81,16 @@ trait ImagePicker {
             }else{
                 $response = $this->cropAction($file,$path,null,null,null,null);
             }
-            $this->cropped($response);
+            $this->cropped($response,$request);
         }
 
         return response()->json($response);
     }
 
-    public function uploadHandler ($file){
+    public function uploadHandler ($file, Request $request){
 
-        $this->beforeUpload();
+        $this->beforeUpload($request);
+
         $response = new \StdClass();
 
         if ($this->options['file_name'] == 'original') {
@@ -109,7 +110,7 @@ trait ImagePicker {
 
         list($response->width, $response->height) = @getimagesizefromstring($img);
 
-        $this->uploaded($response);
+        $this->uploaded($response, $request);
 
         return $response;
     }
@@ -252,7 +253,8 @@ trait ImagePicker {
                 return false;
             }
             $img = Image::make($getTmpImage);
-            $img->resize($heightSetted, $widthSetted, function ($constraint) use($options) {
+
+            $img->resize($widthSetted, $heightSetted, function ($constraint) use($options) {
 
                 if(isset($options['keep_ratio']) && $options['keep_ratio']){
                     $constraint->aspectRatio();
@@ -309,7 +311,7 @@ trait ImagePicker {
         $file = $request->get('file');
         $path = $request->get('path');
 
-        if(!$this->beforeDelete($file,$path)){
+        if(!$this->beforeDelete($file,$path,$request)){
             abort(404);
         }
 
@@ -323,31 +325,31 @@ trait ImagePicker {
             $response->name = $file;
         };
 
-        $this->deleted($response);
+        $this->deleted($response,$request);
     }
 
-    public function autoload(){
+    public function autoload(Request $request){
         /*$image = $this->getUploadPath($name,$path);
         return response()->json($image);*/
     }
 
-    public function cropped (\StdClass $response){
+    public function cropped (\StdClass $response,Request $request){
         //
     }
 
-    public function beforeUpload (){
+    public function beforeUpload (Request $request){
         //
     }
 
-    public function uploaded (\StdClass $response){
+    public function uploaded (\StdClass $response,Request $request){
         //
     }
 
-    public function deleted (\StdClass $response){
+    public function deleted (\StdClass $response,Request $request){
         // Once deleted you can update your user attached image, for example.
     }
 
-    public function beforeDelete($file,$path){
+    public function beforeDelete($file,$path,Request $request){
         // Check if the user can delete this file!
         // Check Laravel Authorization FYI as extra! Is not needed at all.
         return true;
