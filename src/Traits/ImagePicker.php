@@ -21,6 +21,7 @@ trait ImagePicker {
             'auto_orient' => true,
             'min_width' => 200, // Could be null
             'min_height' => 200, // Could be null
+            'crop' => true, // It returns a crop version to client so you can access like this: image.versions.crop.url
             'versions' => [
                 'avatar' => // At least width or height must be defined
                     [
@@ -155,7 +156,25 @@ trait ImagePicker {
 
         list($response->width, $response->height) = @getimagesizefromstring($imageFontSrc);
 
+        $response->versions = [];
+
+
+
         $response->versions = $this->createVersions($tmpUrl,$path);
+        if(isset($this->options['crop'])){
+            $urlCrop = Storage::disk($this->options['upload_dir'])->url($path.'/crop/'.$image);
+            $img = Storage::disk($this->options['upload_dir'])->get($path.'/crop/'.$image);
+            list($widthCrop, $heightCrop) = @getimagesizefromstring($img);
+            $response->versions['crop'] = [
+                'type'   => pathinfo($fileUrl, PATHINFO_EXTENSION),
+                'name'   => pathinfo($fileUrl, PATHINFO_FILENAME) . '.' . $response->type,
+                'size'   => Storage::disk($this->options['upload_dir'])->size($path.'/crop/'.$image),
+                'path'   => $path.'/crop',
+                'url'    => $urlCrop,
+                'width'  => $widthCrop,
+                'height' => $heightCrop
+            ];
+        }
 
         return $response;
     }
@@ -178,12 +197,27 @@ trait ImagePicker {
 
         $response->type = pathinfo($fileUrl, PATHINFO_EXTENSION);
         $response->name = pathinfo($fileUrl, PATHINFO_FILENAME) . '.' . $response->type;
-        $response->size = Storage::disk($this->options['upload_dir'])->size($path.'/'.$name);
-        $response->path = $this->options['upload_folder'];
+        $response->size = Storage::disk($this->options['upload_dir'])->size($path.'/crop/'.$name);
+        $response->path = $path;
         $response->url = $fileUrl;
         list($response->width, $response->height) = @getimagesizefromstring($img);
 
         $response->versions = [];
+
+        if(isset($this->options['crop'])){
+            $urlCrop = Storage::disk($this->options['upload_dir'])->url($path.'/crop/'.$name);
+            $img = Storage::disk($this->options['upload_dir'])->get($path.'/crop/'.$name);
+            list($widthCrop, $heightCrop) = @getimagesizefromstring($img);
+            $response->versions['crop'] = [
+                'type'   => pathinfo($fileUrl, PATHINFO_EXTENSION),
+                'name'   => pathinfo($fileUrl, PATHINFO_FILENAME) . '.' . $response->type,
+                'size'   => Storage::disk($this->options['upload_dir'])->size($path.'/'.$name),
+                'path'   => $path.'/crop',
+                'url'    => $urlCrop,
+                'width'  => $widthCrop,
+                'height' => $heightCrop
+            ];
+        }
 
         foreach ($this->options['versions'] as $version => $options) {
 
