@@ -150,7 +150,7 @@ trait ImagePicker
 
     public function beforeUpload(Request $request)
     {
-        //
+        
     }
 
 
