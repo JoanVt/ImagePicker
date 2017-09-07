@@ -1,0 +1,22 @@
+{
+  "name": "joanvt/imagepicker",
+  "description": "It creates a Laravel integration for ImagePicker (https://codecanyon.net/item/imagepicker-uploader-webcam-cropper/6722532) ",
+  "homepage": "https://github.com/JoanVt/ImagePicker",
+  "keywords": ["laravel","ImagePicker","cropper","jquery"],
+  "minimum-stability": "dev",
+  "authors": [
+    {
+      "name": "Joan",
+      "email": "info@kevento.es"
+    }
+  ],
+  "require": {
+    "php": ">=5.5.6",
+    "intervention/image": "2.*"
+  },
+  "autoload": {
+    "psr-4": {
+      "Joanvt\\ImagePicker\\": "src/"
+    }
+  }
+}
