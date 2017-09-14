@@ -41,7 +41,12 @@ trait ImagePicker {
         }
         return response($image)->header('Content-Type', 'image/jpeg')->header('Content-Length',Storage::disk($this->options['upload_dir'])->size($path.'/'.$file));
     }
-    public function upload (UploadRequest $request){
+
+    public function upload(UploadRequest $request){
+        return $this->uploadHelper($request);
+    }
+
+    public function uploadHelper (UploadRequest $request){
         $response = new \StdClass();
         if ($request->action === 'upload') {
             $file = $request->file('file');
