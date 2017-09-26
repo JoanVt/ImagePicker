@@ -46,7 +46,7 @@ trait ImagePicker {
         return $this->uploadHelper($request);
     }
 
-    public function uploadHelper (UploadRequest $request){
+    public function uploadHelper (Request $request){
         $response = new \StdClass();
         if ($request->action === 'upload') {
             $file = $request->file('file');
@@ -300,7 +300,7 @@ trait ImagePicker {
         return true;
     }
 
-    public function checkImageName($nameImage, $extensionImage, $directory, $folder, $originalName=NULL, $counter = NULL)
+    public function checkImageName($nameImage, $extensionImage, $directory, $folder, $originalName = null, $counter = null)
     {
         /* We check if file exists. Then, if exists, we create a version numbered.  */
         $existsImg = Storage::disk('public')->exists($this->options['upload_folder'] . '/' . $nameImage . '.' . $extensionImage);

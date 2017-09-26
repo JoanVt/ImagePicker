@@ -12,9 +12,9 @@ interface ImagePickerInterface
 
     public function upload (UploadRequest $request);
 
-    public function getUploadPath ($image = '', $version = '');
+    public function getUploadPath ($name, $path);
 
-    public function uploadHandler ($image);
+    public function uploadHandler ($file,Request $request);
 
     public function cropAction ($image, $path, $src_x, $src_y, $dst_w, $dst_h, $rotate = null);
 
@@ -22,16 +22,18 @@ interface ImagePickerInterface
 
     public function delete (Request $request);
 
-    public function cropped (\StdClass $response);
+    public function cropped (\StdClass $response, Request $request);
 
-    public function uploaded (\StdClass $response);
+    public function uploaded (\StdClass $response, Request $request);
 
-    public function deleted (\StdClass $response);
+    public function deleted (\StdClass $response, Request $request);
 
-    public function beforeDelete();
+    public function beforeDelete($file,$path,Request $request);
 
-    public function beforeUpload($file,$path);
+    public function beforeUpload(Request $request);
 
-    public function autoload();
+    public function autoload(Request $request);
+
+    public function checkImageName($nameImage, $extensionImage, $directory, $folder, $originalName = null, $counter = null);
 
 }
